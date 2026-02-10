@@ -1,0 +1,1 @@
+GitHub'daki kod değiştiğinde (v1 -> v2), Argo CD'nin bunu otomatik olarak fark edip cluster'daki uygulamayı güncellemesi.GitHub'daki kod değiştiğinde (v1 -> v2), Argo CD'nin bunu otomatik olarak fark edip cluster'daki uygulamayı güncellemesi.
