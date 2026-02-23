@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K3s Altyapı ve Vagrant Analiz Raporu</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #38bdf8;
+            --secondary: #818cf8;
+            --accent: #f472b6;
+            --text: #f1f5f9;
+            --code-bg: #000000;
+        }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            margin: 0;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: auto; }
+        header {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 20px;
+            border: 1px solid #334155;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        h1 { color: var(--primary); font-size: 2.5rem; margin-bottom: 10px; border: none; }
+        h2 { color: var(--secondary); border-bottom: 2px solid #334155; padding-bottom: 10px; margin-top: 40px; }
+        h3 { color: var(--accent); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #334155;
+            transition: all 0.3s ease;
+        }
+        .card:hover { border-color: var(--primary); transform: translateY(-5px); }
+        pre {
+            background: var(--code-bg);
+            padding: 15px;
+            border-radius: 10px;
+            overflow-x: auto;
+            border: 1px solid #1e293b;
+            font-size: 0.9rem;
+            color: #dcdcdc;
+        }
+        code { color: #fbbf24; font-family: 'Fira Code', monospace; }
+        .env-tag {
+            display: inline-block;
+            background: #334155;
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin: 5px;
+            border: 1px solid var(--primary);
+        }
+        .defense-box {
+            background: #0c4a6e;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+            border-left: 5px solid var(--primary);
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #334155; }
+        th { color: var(--primary); background-color: rgba(56, 189, 248, 0.1); }
+        .highlight { color: var(--accent); font-weight: bold; }
+        .footer { text-align: center; margin-top: 50px; font-size: 0.85rem; opacity: 0.6; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>K3s Infrastructure Analysis</h1>
+        <p>Vagrant Altyapısı | Shell Provisioning | Node Configuration</p>
+    </header>
+
+    <section>
+        <h2>1. Sanallaştırma Katmanı (Vagrantfile)</h2>
+        [cite_start]<p>Sistem, VirtualBox sağlayıcısı üzerinde <code>debian/bookworm64</code> imajını kullanarak izole bir ortam oluşturur. [cite: 3]</p>
+        <div class="grid">
+            <div class="card">
+                <h3>Master Node (Server)</h3>
+                [cite_start]<p><strong>IP:</strong> 192.168.56.110 [cite: 3]</p>
+                [cite_start]<p><strong>Hostname:</strong> emmodoglS [cite: 3]</p>
+                <p><strong>Rol:</strong> Kubernetes Control Plane bileşenlerini çalıştırır.</p>
+            </div>
+            <div class="card">
+                <h3>Worker Node (Agent)</h3>
+                [cite_start]<p><strong>IP:</strong> 192.168.56.111 [cite: 3]</p>
+                [cite_start]<p><strong>Hostname:</strong> eatesSW [cite: 3]</p>
+                <p><strong>Rol:</strong> Uygulama podlarını (workload) barındırır.</p>
+            </div>
+        </div>
+        <div class="defense-box">
+            [cite_start]<strong>Stratejik Detay:</strong> Her iki makineye 2048MB RAM ve 1 CPU atanmıştır. [cite: 3] [cite_start]<code>--natdnshostresolver1</code> ayarı ile ana makinenin DNS çözücüleri sanal makinelere aktarılarak ağ stabilitesi sağlanmıştır. [cite: 3]
+        </div>
+    </section>
+
+    <section>
+        <h2>2. Kurulum Betikleri ve Mantıksal Akış</h2>
+        <h3>2.1. Master Setup (server_setup.sh)</h3>
+        [cite_start]<p>Kurulumda kullanılan <code>INSTALL_K3S_EXEC</code> değişkeni, cluster'ın davranışını belirleyen en kritik noktadır: [cite: 1]</p>
+        <pre><code>export INSTALL_K3S_EXEC="--node-ip=192.168.56.110 --flannel-iface=eth1 --write-kubeconfig-mode 644 --disable traefik"</code></pre>
+        <ul>
+            [cite_start]<li><code>--flannel-iface=eth1</code>: Flannel CNI'ın Vagrant'ın iç ağı üzerinden haberleşmesini zorunlu kılar. [cite: 1]</li>
+            [cite_start]<li><code>--write-kubeconfig-mode 644</code>: Kubeconfig dosyasının yetkilerini düzenleyerek sudo gereksinimini azaltır. [cite: 1]</li>
+            [cite_start]<li><code>--disable traefik</code>: Özel bir Ingress çözümü kullanılacağı için varsayılanı kapatır. [cite: 1]</li>
+        </ul>
+
+        <h3>2.2. Worker Setup (worker_setup.sh)</h3>
+        <p>Worker, Master'ın ürettiği <code>node-token</code> dosyasına ihtiyaç duyar. [cite_start]Bu dosya <code>/vagrant</code> paylaşımlı dizini üzerinden aktarılır: [cite: 2]</p>
+        <pre><code>until [ -r /vagrant/node-token ]; do sleep 1; done</code></pre>
+        [cite_start]<p>Bu döngü, Master kurulumu tamamlanıp token oluşana kadar Worker'ın beklemesini sağlar (Race Condition Prevention). [cite: 2]</p>
+    </section>
+
+    <section>
+        <h2>3. Genişletilmiş Ortam Değişkenleri Sözlüğü</h2>
+        <p>Projede kullanılanlara ek olarak, evaluatörün sorabileceği diğer kritik k3s değişkenleri:</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Değişken</th>
+                    <th>Değer / Durum</th>
+                    <th>Açıklama</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>K3S_URL</code></td>
+                    <td><span class="env-tag">https://192.168.56.110:6443</span></td>
+                    [cite_start]<td>Agent'ın Master API Server'a bağlanma adresi. [cite: 2]</td>
+                </tr>
+                <tr>
+                    <td><code>K3S_TOKEN</code></td>
+                    <td><span class="env-tag">node-token içeriği</span></td>
+                    [cite_start]<td>Cluster'a katılım için gerekli kimlik doğrulama anahtarı. [cite: 2]</td>
+                </tr>
+                <tr>
+                    <td><code>K3S_NODE_NAME</code></td>
+                    <td><span class="env-tag">Opsiyonel</span></td>
+                    <td>Default hostname yerine özel bir node ismi atamak için kullanılır.</td>
+                </tr>
+                <tr>
+                    <td><code>K3S_DATASTORE_ENDPOINT</code></td>
+                    <td><span class="env-tag">SQLite (Default)</span></td>
+                    <td>Yüksek erişilebilirlik (HA) için harici DB (Postgres/MySQL) adresi.</td>
+                </tr>
+                <tr>
+                    <td><code>INSTALL_K3S_VERSION</code></td>
+                    <td><span class="env-tag">Latest</span></td>
+                    <td>Sistemi belirli bir Kubernetes versiyonuna sabitlemek için kullanılır.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="defense-box">
+        <h2>4. Evaluator Savunma (Defans) Rehberi</h2>
+        <p><span class="highlight">Soru:</span> IP adreslerini neden manuel (hardcoded) verdin?</p>
+        <p><strong>Cevap:</strong> Cluster içindeki servislerin (özellikle API Server ve DNS) birbirini bulabilmesi için sabit IP gereklidir. Dinamik IP kullanımı, bir restart durumunda tüm cluster iletişiminin kopmasına neden olur.</p>
+
+        <p><span class="highlight">Soru:</span> <code>alias k='kubectl'</code> neden önemli?</p>
+        [cite_start]<p><strong>Cevap:</strong> <code>.bashrc</code> dosyasına eklenen bu alias, operasyonel hızı artırır ve 42 evaluatörüne terminale ve araçlara olan hakimiyetimizi gösterir. [cite: 1, 2]</p>
+
+        <p><span class="highlight">Soru:</span> <code>set -e</code> kullanmasaydın ne olurdu?</p>
+        <p><strong>Cevap:</strong> Kurulum sırasında bir paket (örneğin <code>curl</code>) inmezse script hata vermeden devam ederdi ve biz k3s'in neden kurulmadığını anlamakta zorlanırdık. [cite_start]<code>set -e</code> hata anında durmayı garanti eder. [cite: 1, 2]</p>
+    </section>
+
+    <footer class="footer">
+        <p>Bu rapor, altyapı bileşenlerinin derinlemesine analizi için modern standartlarda hazırlanmıştır.</p>
+    </footer>
+</div>
+
+</body>
+</html>

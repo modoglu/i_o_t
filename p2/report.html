@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K3s Full Stack Deployment Raporu - 42 Evaluation</title>
+    <style>
+        :root {
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #0f3460;
+            --highlight: #48cae4;
+            --text: #e0e1dd;
+            --card-bg: #1b263b;
+        }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--primary);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+        header {
+            text-align: center;
+            padding: 40px 0;
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid var(--highlight);
+            transition: transform 0.3s ease;
+        }
+        .card:hover { transform: translateY(-5px); }
+        h1, h2, h3 { color: var(--highlight); }
+        code {
+            background: #000;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            color: #ff9e00;
+        }
+        pre {
+            background: #0d1b2a;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid #415a77;
+        }
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .status-table th, .status-table td {
+            padding: 12px;
+            border: 1px solid #415a77;
+            text-align: left;
+        }
+        .status-table th { background: var(--accent); }
+        .logic-flow {
+            background: #e9ecef;
+            color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .warning {
+            background: #780000;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .next-step {
+            text-align: center;
+            margin-top: 50px;
+            font-style: italic;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>K3s Infrastructure & App Orchestration</h1>
+        <p>Vagrant | K3s | Ingress | Multi-App Deployment</p>
+    </header>
+
+    <section>
+        <h2>1. Mimari Katmanları (The Big Picture)</h2>
+        <p>Sistem üç temel katmandan oluşmaktadır: <strong>Provisioning</strong> (Vagrant), <strong>Control Plane</strong> (K3s Server) ve <strong>Application Plane</strong> (Kubernetes Objects).</p>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>Altyapı (IaaS)</h3>
+                [cite_start]<p>Vagrantfile ile <code>debian/bookworm64</code> tabanlı bir node oluşturuldu[cite: 1]. [cite_start]2GB RAM ve 1 CPU atandı[cite: 2]. [cite_start]IP adresi <code>192.168.56.110</code> olarak sabitlendi[cite: 3].</p>
+            </div>
+            <div class="card">
+                <h3>Orkestrasyon</h3>
+                <p><code>server_setup.sh</code> ile K3s kuruldu. <code>--write-kubeconfig-mode 644</code> sayesinde yetki problemleri aşıldı ve <code>node-token</code> paylaşımı sağlandı.</p>
+            </div>
+            <div class="card">
+                <h3>Uygulama Katmanı</h3>
+                <p>3 farklı Deployment ve bunlara bağlı Servisler, tek bir Ingress üzerinden dış dünyaya açıldı.</p>
+            </div>
+        </div>
+    </section>
+
+    
+    <section>
+        <h2>2. Kubernetes Nesne Analizi</h2>
+        <table class="status-table">
+            <thead>
+                <tr>
+                    <th>Bileşen</th>
+                    <th>Detaylar</th>
+                    <th>Stratejik Not</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>App1 Deployment</strong></td>
+                    <td>1 Replica, Port 8080</td>
+                    <td>Minimalist uygulama.</td>
+                </tr>
+                <tr>
+                    <td><strong>App2 Deployment</strong></td>
+                    [cite_start]<td>3 Replicas [cite: 2]</td>
+                    <td><strong>Yüksek Erişilebilirlik (HA)</strong> testi için tercih edildi. K3s, yükü bu 3 pod arasında paylaştırır.</td>
+                </tr>
+                <tr>
+                    <td><strong>App3 Deployment</strong></td>
+                    <td>1 Replica</td>
+                    <td>Varsayılan (Default) backend görevi görür.</td>
+                </tr>
+                <tr>
+                    <td><strong>Services</strong></td>
+                    <td>ClusterIP (Port 80)</td>
+                    <td>Pod'lar değişse bile sabit IP/DNS üzerinden erişim sağlar.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>3. Ingress Yönlendirme Mantığı (Traffic Control)</h2>
+        <p><code>ingress.yaml</code> dosyası, trafiği <strong>Host-based routing</strong> yöntemiyle yönetir:</p>
+        <ul>
+            <li><code>app1.com</code> -> <code>app1-service</code> (Port 80)</li>
+            <li><code>app2.com</code> -> <code>app2-service</code> (Port 80)</li>
+            <li>Diğer tüm trafik (Default) -> <code>app3-service</code></li>
+        </ul>
+        <div class="logic-flow">
+            <strong>Evaluator İpucu:</strong> "Nasıl test ederiz?" diye sorarsa: <code>/etc/hosts</code> dosyasına bu domainleri ekleyerek veya <code>curl -H "Host: app1.com" 192.168.56.110</code> komutuyla kanıtlayabilirsin.
+        </div>
+    </section>
+
+    <section>
+        <h2>4. Ortam Değişkenleri ve Gizli Kahramanlar</h2>
+        <p>Kodunda kullandığın <code>MESSAGE</code> değişkeni dışında, K3s ve App yönetimi için bilmen gerekenler:</p>
+        <pre>
+# Uygulama içindeki değişken (YAML'dan)
+env:
+  - name: MESSAGE
+    value: "Hello from appX"
+
+# K3s Kurulum Değişkenleri (Genişletilmiş)
+- K3S_KUBECONFIG_MODE: Dosya izinlerini ayarlar (Senin 644 yaptığın yer).
+- K3S_DATASTORE_ENDPOINT: Eğer etcd veya harici SQL kullanacaksan.
+- K3S_AGENT_TOKEN: Worker'lar için kritik güvenlik anahtarı.
+        </pre>
+    </section>
+
+    <section>
+        <h2>5. Defans (Evaluation) Soruları</h2>
+        
+        <div class="card">
+            <strong>S: Neden Port 8080'den 80'e yönlendirme yaptın?</strong>
+            <br>C: Uygulama (container) güvenli olmayan yüksek portlarda (8080) çalışır. Service katmanı bunu standart HTTP portuna (80) çekerek Ingress için uyumlu hale getirir.
+        </div>
+        <br>
+        <div class="card">
+            <strong>S: <code>app2</code> neden 3 replika?</strong>
+            <br>C: Load Balancing (Yük dengeleme) özelliğini göstermek için. Bir pod çökse dahi diğer ikisi trafiği karşılamaya devam eder.
+        </div>
+        <br>
+        <div class="warning">
+            <strong>Kritik Uyarı:</strong> <code>server_setup.sh</code> içinde <code>until sudo kubectl get nodes</code> döngüsü çok önemli. Çünkü K3s'in API server'ının ayağa kalkması birkaç saniye sürer. Bu döngü olmadan YAML dosyalarını apply etmeye çalışırsan "Connection Refused" hatası alırsın.
+        </div>
+    </section>
+
+    <footer class="next-step">
+        <p>Raporu sunduktan sonra: "Dilerseniz bir pod'u silip K3s'in onu nasıl otomatik olarak tekrar ayağa kaldırdığını (Self-healing) gösterebilirim," diyerek sunumu bitirebilirsin.</p>
+    </footer>
+</div>
+
+</body>
+</html>

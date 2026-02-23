@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitOps & ArgoCD Deployment Raporu</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #38bdf8;
+            --secondary: #818cf8;
+            --accent: #f472b6;
+            --text: #f1f5f9;
+            --code-bg: #000000;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            margin: 0;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: auto; }
+        header {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 20px;
+            border: 1px solid #334155;
+            margin-bottom: 40px;
+        }
+        h1 { color: var(--primary); font-size: 2.5rem; margin-bottom: 10px; }
+        h2 { color: var(--secondary); border-bottom: 2px solid #334155; padding-bottom: 10px; margin-top: 40px; }
+        h3 { color: var(--accent); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #334155;
+            transition: all 0.3s ease;
+        }
+        .card:hover { border-color: var(--primary); transform: translateY(-5px); }
+        pre {
+            background: var(--code-bg);
+            padding: 15px;
+            border-radius: 10px;
+            overflow-x: auto;
+            border: 1px solid #1e293b;
+            font-size: 0.9rem;
+        }
+        code { color: #fbbf24; }
+        .env-tag {
+            display: inline-block;
+            background: #334155;
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            margin: 5px;
+            border: 1px solid var(--primary);
+        }
+        .defense-section {
+            background: #0c4a6e;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+            border-left: 5px solid var(--primary);
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+        th { color: var(--primary); }
+        .highlight { color: var(--accent); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>GitOps Operasyonel Raporu</h1>
+        <p>ArgoCD | K3s | Automated Delivery | 42 Evaluation Ready</p>
+    </header>
+
+    <section>
+        <h2>1. Mimari Tasarım (ArgoCD & GitOps)</h2>
+        <p>Bu proje, geleneksel <code>kubectl apply</code> yönteminden kaçınarak, <strong>GitOps</strong> prensiplerini benimser. ArgoCD, cluster içinde bir "bekçi" görevi görerek Git üzerindeki dosyalar ile Cluster üzerindeki durumu (State) sürekli senkronize eder.</p>
+        
+        
+
+        <div class="grid">
+            <div class="card">
+                <h3>Otomasyon Katmanı</h3>
+                <p><code>install.sh</code> betiği, ArgoCD'yi kendi namespace'ine (<code>argocd</code>) kurar ve gerekli CRD'leri (Custom Resource Definitions) yükler.</p>
+            </div>
+            <div class="card">
+                <h3>Uygulama Deklarasyonu</h3>
+                <p><code>application.yaml</code> dosyası, ArgoCD'ye hangi repoyu izleyeceğini ve hangi cluster'a (in-cluster) yükleme yapacağını söyler.</p>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>2. Dosya Fonksiyon Analizi</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Dosya</th>
+                    <th>Görev</th>
+                    <th>Teknik Detay</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>Makefile</code></td>
+                    <td>Orkestrasyon</td>
+                    <td>Tüm kurulumu <code>make all</code> ile otomatize eder, karmaşıklığı gizler.</td>
+                </tr>
+                <tr>
+                    <td><code>argocd.yaml</code></td>
+                    <td>Sistem Kurulumu</td>
+                    <td>ArgoCD'nin core bileşenlerini (Server, Repo Server, Controller) tanımlar.</td>
+                </tr>
+                <tr>
+                    <td><code>namespace.yaml</code></td>
+                    <td>İzolasyon</td>
+                    <td>Uygulamanın çalışacağı mantıksal alanı (namespace) oluşturur.</td>
+                </tr>
+                <tr>
+                    <td><code>setup_app.sh</code></td>
+                    <td>Uygulama Hazırlığı</td>
+                    <td>Namespace oluşturma ve ArgoCD'ye uygulamayı tanıtma işini yapar.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>3. Ortam Değişkenleri ve Parametreler (Genişletilmiş)</h2>
+        <p>Projede kullanılan ve Kubernetes ekosisteminde kritik olan diğer değişkenler:</p>
+        <div>
+            <span class="env-tag">ARGOCD_SERVER_REPLICA: 1</span>
+            <span class="env-tag">SYNC_POLICY: Automated</span>
+            <span class="env-tag">KUBECONFIG: /etc/rancher/k3s/k3s.yaml</span>
+            <span class="env-tag">NAMESPACE: argocd / app-namespace</span>
+        </div>
+        <pre>
+# application.yaml içindeki kritik bölüm
+spec:
+  destination:
+    server: https://kubernetes.default.svc # Cluster içi API erişimi
+    namespace: argocd
+  syncPolicy:
+    automated: # Manuel müdahale olmadan otomatik güncelleme
+      prune: true # Git'te silinen burada da silinsin
+      selfHeal: true # Cluster'da manuel bir şey değişirse düzelt
+        </pre>
+    </section>
+
+    <section class="defense-section">
+        <h2>4. Defans ve "Zor Soru" Hazırlığı</h2>
+        
+        <p><span class="highlight">Soru:</span> Neden <code>Makefile</code> kullandın?</p>
+        <p><strong>Cevap:</strong> Altyapı kurulumu çok adımlı bir süreçtir. Makefile, bağımlılıkları yöneterek (önce k3s, sonra argocd, sonra app) hatasız ve tekrarlanabilir bir kurulum sağlar.</p>
+
+        <p><span class="highlight">Soru:</span> ArgoCD'deki <code>selfHeal: true</code> ne işe yarar?</p>
+        <p><strong>Cevap:</strong> Eğer birisi terminalden <code>kubectl edit</code> ile canlı sistemdeki bir pod sayısını değiştirirse, ArgoCD bunu hemen fark eder ve Git'teki orijinal haline geri döndürür. Bu, "Configuration Drift"i engeller.</p>
+
+        <p><span class="highlight">Soru:</span> <code>install.sh</code> içindeki <code>kubectl wait</code> neden var?</p>
+        <p><strong>Cevap:</strong> Podlar oluşmaya başlar başlamaz hazır olmazlar. Bir sonraki komuta geçmeden önce servislerin gerçekten çalışır durumda olduğundan emin olmak için gereklidir.</p>
+    </section>
+
+    <section>
+        <h2>5. Akış Özeti (Kurulum Sırası)</h2>
+        <ol>
+            <li><strong>Vagrant/K3s:</strong> Sanal makine ve K8s ayağa kalkar[cite: 1].</li>
+            <li><strong>ArgoCD Core:</strong> <code>argocd.yaml</code> ile GitOps motoru kurulur[cite: 2].</li>
+            <li><strong>Application Controller:</strong> <code>application.yaml</code> ile ArgoCD'ye hedef gösterilir[cite: 1].</li>
+            <li><strong>Sync:</strong> ArgoCD, Git'teki <code>deployment.yaml</code> ve <code>service.yaml</code>'ı okuyup cluster'a basar[cite: 3].</li>
+        </ol>
+    </section>
+
+    <div style="text-align: center; margin-top: 40px; font-size: 0.8rem; opacity: 0.6;">
+        Bu rapor, 42 Evaluation standartlarına uygun olarak teknik derinlik sağlamak amacıyla üretilmiştir.
+    </div>
+</div>
+
+</body>
+</html>
