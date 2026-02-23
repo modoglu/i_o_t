@@ -13,7 +13,7 @@ install:
 	@echo "🔧 Kurulum betiklerine izin veriliyor..."
 	@chmod +x $(INSTALL_SCRIPT) $(SETUP_SCRIPT)
 	@echo "🚀 install.sh çalıştırılıyor (k3d ve araçlar)..."
-	@./$(INSTALL_SCRIPT)
+	@$(INSTALL_SCRIPT)
 
 setup:
 	@echo "🏗️ Argo CD ve Namespace yapılandırması başlatılıyor..."
