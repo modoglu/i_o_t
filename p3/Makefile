@@ -6,7 +6,7 @@ SETUP_SCRIPT    = $(SCRIPTS_DIR)/setup_app.sh
 ARGOCD_NS       = argocd
 TIMEOUT         = 300s
 
-TOKEN           = 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
+TOKEN           = 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
 REPO_URL        = github.com/modoglu/i_o_t.git
 USER_NAME       = modoglu
 USER_EMAIL      = eminmodogluxox@gmail.com
