@@ -3,13 +3,15 @@ SCRIPTS_DIR     = ./scripts
 CONFS_DIR       = ./confs
 INSTALL_SCRIPT  = $(SCRIPTS_DIR)/install.sh
 SETUP_SCRIPT    = $(SCRIPTS_DIR)/setup_app.sh
-GIT_REPO_URL    = git@github.com:modoglu/i_o_t.git
 ARGOCD_NS       = argocd
 TIMEOUT         = 300s
-TOKEN			=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
 
-# Değerlendirici make yazdığında çalışacak ana kural (git-push çıkarıldı)
-all: install login deploy git-push
+TOKEN           = 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
+REPO_URL        = github.com/modoglu/i_o_t.git
+USER_NAME       = modoglu
+USER_EMAIL      = eminmodogluxox@gmail.com
+
+all: install login git-push deploy
 
 install:
 	@echo "🔧 Kurulum betiklerine izin veriliyor..."
@@ -34,27 +36,29 @@ login: setup
 	@echo "🔐 Argo CD CLI girişi yapılıyor..."
 	@argocd login localhost:8080 --username admin --password $$(cat password.txt) --insecure
 
+git-push:
+	@echo "📤 DevOps Otomasyonu: Git kimlik bilgileri yerel olarak ayarlanıyor..."
+	@git config --local user.name "$(USER_NAME)"
+	@git config --local user.email "$(USER_EMAIL)"
+	@echo "🚀 Dosyalar i_o_t reposuna token ile gönderiliyor..."
+	@git add .
+	@git commit -m "Automated DevOps Update: $$(date)" || true
+	@git push --force https://$(TOKEN)@$(REPO_URL) main || (echo "⚠️ Push başarısız! Token yetkilerini (repo scope) kontrol edin." && exit 1)
+
 deploy:
 	@echo "🚀 Uygulama (Application) Argo CD'ye tanıtılıyor..."
 	@kubectl apply -f $(CONFS_DIR)/application.yaml
+	@echo "✅ Her şey hazır! Argo CD üzerinden senkronizasyonu takip edebilirsiniz."
 
 status:
 	@echo "📊 Cluster durumu:"
 	@kubectl get nodes
 	@echo "\n📦 Pod durumları ($(ARGOCD_NS)):"
 	@kubectl get pods -n $(ARGOCD_NS)
-	@echo "\n📦 Pod durumları (dev):"
-	@kubectl get pods -n dev
 
 clean:
 	@echo "🗑️ k3d cluster siliniyor..."
 	@k3d cluster delete mycluster
 	@rm -f password.txt
-
-git-push:
-	@echo "📤 Dosyalar i_o_t reposuna güvenli bağlantı ile gönderiliyor..."
-	@git add .
-	@git commit -m "Automated update via Makefile" || true
-	@git push https://$(TOKEN)@github.com/modoglu/i_o_t.git main || echo "⚠️ Push hala başarısız. Lütfen token yetkilerini kontrol edin."
 
 .PHONY: all install setup login deploy status clean git-push
