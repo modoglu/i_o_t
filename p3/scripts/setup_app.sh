@@ -1,13 +1,16 @@
 #!/bin/bash
 
-kubectl apply -f ../confs/namespace.yaml
+# Çalışma dizini Makefile'ın bulunduğu yer olduğu için ./confs kullanıyoruz
+kubectl apply -f ./confs/namespace.yaml
 
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+# CRD boyut sınırına takılmamak için --server-side eklendi
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml --server-side
 
 echo "Argo CD bilesenleri yuklemesini bekliyor..."
-kubectl wait --for=condition=avaliable --timeout=600ms deployment/argocd-server -n argocd
+# available doğru yazıldı ve süre 600 saniye (10 dakika) yapıldı
+kubectl wait --for=condition=available --timeout=600s deployment/argocd-server -n argocd
 
-kubectl apply -f ../confs/application.yaml
+kubectl apply -f ./confs/application.yaml
 
 echo "Kurulum Tamamlandi"
 echo "Kullanici Adi : admin"

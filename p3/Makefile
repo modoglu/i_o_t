@@ -3,11 +3,12 @@ SCRIPTS_DIR     = ./scripts
 CONFS_DIR       = ./confs
 INSTALL_SCRIPT  = $(SCRIPTS_DIR)/install.sh
 SETUP_SCRIPT    = $(SCRIPTS_DIR)/setup_app.sh
-GIT_REPO_URL	= git@github.com:modoglu/i_o_t.git
+GIT_REPO_URL    = git@github.com:modoglu/i_o_t.git
 ARGOCD_NS       = argocd
 TIMEOUT         = 300s
 
-all: install git-push login deploy
+# Değerlendirici make yazdığında çalışacak ana kural (git-push çıkarıldı)
+all: install login deploy git-push
 
 install:
 	@echo "🔧 Kurulum betiklerine izin veriliyor..."
@@ -25,8 +26,8 @@ login: setup
 	@echo "" >> password.txt
 	@echo "⏳ Argo CD podlarının hazır olması bekleniyor (Limit: $(TIMEOUT))..."
 	@kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=argocd-server -n $(ARGOCD_NS) --timeout=$(TIMEOUT)
-	@echo "🔌 Port-forward başlatılıyor..."
-	@kubectl -n $(ARGOCD_NS) port-forward svc/argocd-server 8080:443 &
+	@echo "🔌 Port-forward başlatılıyor (HTTP 80 portuna)..."
+	@kubectl -n $(ARGOCD_NS) port-forward svc/argocd-server 8080:80 > /dev/null 2>&1 &
 	@echo "⏳ Tünelin oturması bekleniyor..."
 	@sleep 10
 	@echo "🔐 Argo CD CLI girişi yapılıyor..."
@@ -52,7 +53,7 @@ clean:
 git-push:
 	@echo "📤 Dosyalar GitHub'a gönderiliyor..."
 	git add $(CONFS_DIR)/deployment.yaml $(CONFS_DIR)/service.yaml
-	git commit -m "Update application manifests to v1"
-	git push origin master
+	git commit -m "Update application manifests to v1" || true
+	git push origin main
 
 .PHONY: all install setup login deploy status clean git-push

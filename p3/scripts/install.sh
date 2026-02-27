@@ -1,4 +1,4 @@
-#!bin/bash
+#!/bin/bash
 
 sudo apt-get update
 sudo apt-get install docker.io -y
@@ -18,8 +18,8 @@ rm argocd-linux-amd64 kubectl
 if lsof -i :8888 > /dev/null; then
     echo "8888 portu dolu !!!!"
     exit 1
-
 else
     echo "8888 portu müsait. Cluster olusturuluyor..."
-    k3d cluster create -p "8888:8888@loadbalancer"
+    # mycluster ismi eklendi
+    k3d cluster create mycluster -p "8888:8888@loadbalancer"
 fi
