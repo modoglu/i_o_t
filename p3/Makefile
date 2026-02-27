@@ -6,6 +6,7 @@ SETUP_SCRIPT    = $(SCRIPTS_DIR)/setup_app.sh
 GIT_REPO_URL    = git@github.com:modoglu/i_o_t.git
 ARGOCD_NS       = argocd
 TIMEOUT         = 300s
+TOKEN			= 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
 
 # Değerlendirici make yazdığında çalışacak ana kural (git-push çıkarıldı)
 all: install login deploy git-push
@@ -51,8 +52,9 @@ clean:
 	@rm -f password.txt
 
 git-push:
-	@echo "📤 Dosyalar i_o_t reposuna token ile gönderiliyor..."
+	@echo "📤 Dosyalar i_o_t reposuna güvenli bağlantı ile gönderiliyor..."
 	@git add .
 	@git commit -m "Automated update via Makefile" || true
-	@git push https://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@github.com/modoglu/i_o_t.git main || echo "⚠️ Push başarısız."
+	@git push https://$(TOKEN)@github.com/modoglu/i_o_t.git main || echo "⚠️ Push hala başarısız. Lütfen token yetkilerini kontrol edin."
+
 .PHONY: all install setup login deploy status clean git-push
