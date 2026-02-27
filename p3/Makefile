@@ -51,9 +51,8 @@ clean:
 	@rm -f password.txt
 
 git-push:
-	@echo "📤 Dosyalar dogrudan i_o_t reposuna gönderiliyor..."
+	@echo "📤 Dosyalar i_o_t reposuna token ile gönderiliyor..."
 	@git add .
-	@git commit -m "Make komutu ile otomatik guncelleme" || true
-	@git push https://github.com/modoglu/i_o_t.git main || echo "⚠️ Git push yetkisi reddedildi (Değerlendirme ortamı için normaldir). Kuruluma devam ediliyor..."
-
+	@git commit -m "Automated update via Makefile" || true
+	@git push https://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@github.com/modoglu/i_o_t.git main || echo "⚠️ Push başarısız."
 .PHONY: all install setup login deploy status clean git-push
