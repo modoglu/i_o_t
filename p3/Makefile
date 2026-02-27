@@ -35,13 +35,17 @@ login: setup
 	@argocd login localhost:8080 --username admin --password $$(cat password.txt) --insecure
 
 git-push:
-	@echo "📤 DevOps Otomasyonu: Hedef repo zorlanıyor..."
+	@echo "📤 DevOps Otomasyonu: Mevcut Git yapılandırması temizleniyor..."
 	@git config --local user.name "$(USER)"
 	@git config --local user.email "$(USER)@example.com"
+	@# Eski remote'u temizleyip token'lı yeni remote'u ekliyoruz
+	@git remote remove destination 2>/dev/null || true
+	@git remote add destination https://$(USER):$(TOKEN)@$(TARGET_REPO_URL)
+	@echo "🚀 Dosyalar hedefe (i_o_t) zorlanıyor..."
 	@git add .
-	@git commit -m "Automated Update: $$(date)" || true
-	@# 'modoglu:token' formatı yetkilendirme sorunlarını %100 çözer
-	@git push --force https://$(USER):$(TOKEN)@$(TARGET_REPO_URL) main || (echo "❌ Push başarısız! Lütfen Token yetkilerini (repo) kontrol edin." && exit 1)
+	@git commit -m "Automated DevOps Update: $$(date)" || true
+	@# Doğrudan yeni eklediğimiz güvenli 'destination' remote'una pushluyoruz
+	@git push --force destination main || (echo "❌ Push başarısız! Lütfen Token yetkilerini (Contents: Read & Write) kontrol edin." && exit 1)
 
 deploy:
 	@echo "🚀 Uygulama Argo CD'ye tanıtılıyor..."
