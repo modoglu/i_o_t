@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Çalışma dizini Makefile'ın bulunduğu yer olduğu için ./confs kullanıyoruz
-kubectl apply -f ./confs/namespace.yaml
+# Uygulama manifestleri Argo ile senkronize edilen p3/app; namespace önce yerel uygulanır
+kubectl apply -f ./app/namespace.yaml
 
 # CRD boyut sınırına takılmamak için --server-side eklendi
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml --server-side
